@@ -1,0 +1,63 @@
+// prisma/schema.prisma
+
+// Configuración del generador de cliente Prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Configuración de la fuente de datos
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/**
+ * MODELO: Client
+ * Representa a un cliente/usuario que interactúa con el chatbot.
+ * 
+ * Campos:
+ * - id: Identificador único (UUID)
+ * - phone_number: Número telefónico único del cliente
+ * - name: Nombre del cliente (opcional)
+ * - chat_state: Estado actual de la conversación con el chatbot
+ * - created_at: Fecha y hora de registro del cliente
+ * - quotes: Relación con las cotizaciones asociadas al cliente
+ */
+model Client {
+  id           String   @id @default(uuid())
+  phone_number String   @unique
+  name         String?
+  chat_state   String   @default("idle")
+  created_at   DateTime @default(now())
+
+  // Relación: Un cliente puede tener muchas cotizaciones
+  quotes       Quote[]
+
+  @@map("clients") // Mapea el modelo a la tabla 'clients' en PostgreSQL
+}
+
+/**
+ * MODELO: Quote
+ * Representa una cotización generada para un cliente.
+ * 
+ * Campos:
+ * - id: Identificador único (UUID)
+ * - client_id: Clave foránea que referencia al cliente
+ * - client: Relación con el modelo Client
+ * - service_type: Tipo de servicio solicitado
+ * - estimated_price: Precio estimado de la cotización
+ * - status: Estado de la cotización (ej: pending, approved, rejected)
+ */
+model Quote {
+  id              String   @id @default(uuid())
+  client_id       String
+  service_type    String
+  estimated_price Float
+  status          String   @default("pending")
+
+  // Relación: Una cotización pertenece a un único cliente
+  // onDelete: Cascade -> Si se elimina el cliente, se eliminan sus cotizaciones
+  client          Client   @relation(fields: [client_id], references: [id], onDelete: Cascade)
+
+  @@map("quotes") // Mapea el modelo a la tabla 'quotes' en PostgreSQL
+}
