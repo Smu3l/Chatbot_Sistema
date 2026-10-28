@@ -28,11 +28,8 @@ export class WhatsappController {
    * GET /webhook
    * Endpoint para la verificación del webhook por parte de Meta
    * Debe validar el hub.verify_token y retornar hub.challenge en texto plano
-   * @param query - Parámetros de verificación enviados por Meta
-   * @param res - Objeto Response de Express
    */
   @Get()
-  @HttpCode(HttpStatus.OK)
   verifyWebhook(
     @Query('hub.mode') mode: string,
     @Query('hub.verify_token') verifyToken: string,
@@ -41,21 +38,15 @@ export class WhatsappController {
   ) {
     this.logger.log('Verificación de webhook recibida de Meta');
 
-    // Validar que el modo sea subscribe
-    if (mode === 'subscribe') {
-      // Validar el token contra la variable de entorno
-      if (this.whatsappService.validateVerifyToken(verifyToken)) {
-        this.logger.log('Token de verificación válido - Webhook verificado');
-        // Retornar hub.challenge en texto plano (HTTP 200)
-        return res.status(HttpStatus.OK).send(challenge);
-      } else {
-        this.logger.error('Token de verificación inválido');
-        return res.status(HttpStatus.FORBIDDEN).send('Forbidden');
-      }
+    // Validar que el modo sea subscribe y el token
+    if (mode === 'subscribe' && verifyToken === process.env.WHATSAPP_VERIFY_TOKEN) {
+      this.logger.log('Token de verificación válido - Webhook verificado');
+      // Retornar únicamente hub.challenge como texto plano con HTTP 200
+      return res.status(200).type('text/plain').send(challenge);
     }
 
-    this.logger.error('Modo de verificación inválido');
-    return res.status(HttpStatus.FORBIDDEN).send('Forbidden');
+    this.logger.error('Verificación de webhook fallida');
+    return res.status(403).send('Forbidden');
   }
 
   /**
