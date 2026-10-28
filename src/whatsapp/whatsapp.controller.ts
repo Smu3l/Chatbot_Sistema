@@ -18,7 +18,7 @@ import { WhatsappService } from './whatsapp.service.js';
  * Controlador para el webhook de WhatsApp Cloud API (Meta)
  * Maneja la verificación del webhook y recepción de mensajes entrantes
  */
-@Controller('webhook')
+@Controller()
 export class WhatsappController {
   private readonly logger = new Logger(WhatsappController.name);
 
@@ -29,7 +29,7 @@ export class WhatsappController {
    * Endpoint para la verificación del webhook por parte de Meta
    * Debe validar el hub.verify_token y retornar hub.challenge en texto plano
    */
-  @Get()
+  @Get('webhook')
   verifyWebhook(
     @Query('hub.mode') mode: string,
     @Query('hub.verify_token') verifyToken: string,
@@ -53,10 +53,8 @@ export class WhatsappController {
    * POST /webhook
    * Endpoint para recibir mensajes entrantes de WhatsApp
    * Siempre debe retornar 200 OK para evitar que Meta suspenda el webhook
-   * @param req - Request con el payload de Meta
-   * @param res - Response de Express
    */
-  @Post()
+  @Post('webhook')
   @HttpCode(HttpStatus.OK)
   async receiveMessage(@Req() req: Request, @Res() res: Response) {
     try {
